@@ -12,6 +12,9 @@ fn main() -> Result<(), slint::PlatformError> {
     // Идентификатор приложения для Wayland/X11: по нему композитор
     // показывает имя окна и применяет правила окон. Задаётся до показа окна.
     slint::set_xdg_app_id("stat-forge")?;
+    // Единственный источник версии — Cargo.toml: он же попадает в ресурсы
+    // .exe на Windows (build.rs) и в Info.plist на macOS (сборка релиза).
+    ui.set_app_version(env!("CARGO_PKG_VERSION").into());
 
     tabs::random::install(&ui);
     tabs::standard::install(&ui);

@@ -88,11 +88,11 @@ SLINT_BACKEND=winit-femtovg cargo run --release
 2. Поставьте тег с той же версией и отправьте его:
 
    ```sh
-   git tag v0.2.0
-   git push origin v0.2.0
+   git tag v1.1.0
+   git push origin v1.1.0
    ```
 
-Workflow `Release` соберёт `stat-forge-v0.2.0-windows-x86_64.zip` и `stat-forge-v0.2.0-macos-universal.zip` и опубликует релиз с автоматическим списком изменений. Если тег не совпадает с версией в `Cargo.toml`, сборка остановится с ошибкой.
+Workflow `Release` соберёт `stat-forge-v1.1.0-windows-x86_64.zip` и `stat-forge-v1.1.0-macos-universal.zip` и опубликует релиз с автоматическим списком изменений. Если тег не совпадает с версией в `Cargo.toml`, сборка остановится с ошибкой.
 
 Workflow `CI` проверяет каждый push и pull request в `main`: форматирование, clippy, тесты и сборку на Linux, Windows и macOS.
 

@@ -22,11 +22,13 @@ export { PointBuyState, PointBuyCard } from "point_buy_tab.slint";
 
 export component AppWindow inherits Window {
     in-out property <int> current-tab: 0;
+    // Версия из Cargo.toml, задаётся из Rust.
+    in property <string> app-version;
 
     // Число колонок подстраивается под ширину окна (6 делится на 3, 2 и 1).
     property <int> columns: root.width >= 940px ? 3 : root.width >= 640px ? 2 : 1;
 
-    title: "Stat Forge";
+    title: root.app-version == "" ? "Stat Forge" : "Stat Forge \{root.app-version}";
     icon: @image-url("icon.svg");
     background: Palette.window;
     default-font-family: "JetBrains Mono";
