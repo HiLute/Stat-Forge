@@ -1,0 +1,201 @@
+import { Palette } from "theme.slint";
+
+// Крупная панель с содержимым вкладки.
+export component Panel inherits Rectangle {
+    background: Palette.panel;
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: Palette.border;
+}
+
+// Карточка в сетке из шести элементов. Минимальная и предпочтительная
+// ширина обнулены, чтобы ряд делился поровну независимо от длины текста
+// внутри; достаточную ширину обеспечивает выбор числа колонок в окне.
+export component Card inherits Rectangle {
+    min-width: 0px;
+    preferred-width: 0px;
+    background: Palette.card;
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: Palette.border;
+}
+
+export component AccentButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> enabled: true;
+    callback clicked;
+
+    height: 32px;
+    border-radius: 6px;
+    opacity: self.enabled ? 1 : 0.55;
+    background: !self.enabled ? Palette.accent : touch.pressed ? Palette.accent-pressed : touch.has-hover ? Palette.accent-hover : Palette.accent;
+
+    HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        Text {
+            text: root.text;
+            color: Palette.accent-text;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+export component SecondaryButton inherits Rectangle {
+    in property <string> text;
+    callback clicked;
+
+    height: 30px;
+    border-radius: 6px;
+    background: touch.pressed ? Palette.control-pressed : touch.has-hover ? Palette.control-hover : Palette.control;
+    border-width: 1px;
+    border-color: Palette.border;
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        Text {
+            text: root.text;
+            color: touch.has-hover ? Palette.text : Palette.muted;
+            font-size: 12px;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    // Сюда можно вложить PopupWindow — он позиционируется относительно кнопки.
+    @children
+}
+
+export component IconButton inherits Rectangle {
+    in property <image> icon;
+    callback clicked;
+
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: touch.pressed ? Palette.control-pressed : touch.has-hover ? Palette.control-hover : Palette.control;
+    border-width: 1px;
+    border-color: Palette.border;
+
+    Image {
+        source: root.icon;
+        width: 16px;
+        height: 16px;
+        colorize: touch.has-hover ? Palette.text : Palette.muted;
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    // Сюда можно вложить PopupWindow — он позиционируется относительно кнопки.
+    @children
+}
+
+// Пункт выпадающего меню.
+export component MenuItem inherits Rectangle {
+    in property <string> text;
+    callback clicked;
+
+    height: 30px;
+    horizontal-stretch: 1;
+    // Пункты в ряду меню одинаковой ширины, чтобы столбцы были ровными.
+    min-width: 0px;
+    preferred-width: 0px;
+    border-radius: 5px;
+    background: touch.has-hover ? Palette.control-hover : transparent;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        Text {
+            text: root.text;
+            color: Palette.text;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// Фон выпадающего меню или всплывающей панели.
+export component PopupSurface inherits Rectangle {
+    background: Palette.card;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: Palette.border;
+    drop-shadow-blur: 16px;
+    drop-shadow-offset-y: 4px;
+    drop-shadow-color: #00000080;
+}
+
+// Переключатель вкладок: сегменты одинаковой ширины, активный подсвечен.
+export component TabBar inherits Rectangle {
+    in property <[string]> tabs;
+    in-out property <int> current;
+
+    background: Palette.card;
+    border-radius: 8px;
+
+    HorizontalLayout {
+        padding: 4px;
+        spacing: 4px;
+
+        for tab[i] in root.tabs: Rectangle {
+            horizontal-stretch: 1;
+            height: 34px;
+            border-radius: 6px;
+            background: i == root.current ? Palette.accent : touch.has-hover ? Palette.control-hover : transparent;
+            animate background { duration: 150ms; }
+
+            HorizontalLayout {
+                padding-left: 8px;
+                padding-right: 8px;
+                Text {
+                    text: tab;
+                    color: i == root.current ? Palette.accent-text : Palette.muted;
+                    font-size: 13px;
+                    font-weight: i == root.current ? 600 : 400;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    overflow: elide;
+                    animate color { duration: 150ms; }
+                }
+            }
+
+            touch := TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    root.current = i;
+                }
+            }
+        }
+    }
+}

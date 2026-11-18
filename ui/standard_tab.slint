@@ -1,0 +1,123 @@
+import { ComboBox } from "std-widgets.slint";
+import { Palette } from "theme.slint";
+import { Card, MenuItem, PopupSurface, SecondaryButton } from "widgets.slint";
+
+export struct StandardCard {
+    name: string,
+    modifier: string,
+    options: [string],
+    selected: int,
+}
+
+export global StandardState {
+    in property <[StandardCard]> cards;
+    in property <string> values-text;
+    in property <[string]> classes;
+    callback assign(ability: int, option: int);
+    callback apply-template(index: int);
+}
+
+component StandardCardView inherits Card {
+    in property <StandardCard> data;
+    callback picked(option: int);
+
+    // См. RollCard: ComboBox разрывает привязку current-index при выборе.
+    changed data => {
+        combo.current-index = self.data.selected;
+    }
+
+    VerticalLayout {
+        padding: 14px;
+        spacing: 10px;
+
+        HorizontalLayout {
+            Text {
+                text: root.data.name;
+                color: Palette.text;
+                font-size: 15px;
+                font-weight: 600;
+                vertical-alignment: center;
+            }
+            Rectangle { horizontal-stretch: 1; }
+            Text {
+                text: root.data.modifier;
+                color: Palette.muted;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+        }
+
+        combo := ComboBox {
+            model: root.data.options;
+            current-index: root.data.selected;
+            selected => {
+                root.picked(self.current-index);
+            }
+        }
+    }
+}
+
+export component StandardTab inherits VerticalLayout {
+    in property <int> columns;
+    property <length> popup-width: 300px;
+    property <int> menu-columns: 2;
+
+    spacing: 14px;
+
+    HorizontalLayout {
+        spacing: 8px;
+        Text {
+            text: "Распределите значения:";
+            color: Palette.muted;
+            font-size: 14px;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        Text {
+            text: StandardState.values-text;
+            color: Palette.accent;
+            font-size: 14px;
+            font-weight: 700;
+            vertical-alignment: center;
+        }
+        Rectangle { horizontal-stretch: 1; }
+        template-button := SecondaryButton {
+            text: "Использовать шаблон класса";
+            clicked => {
+                templates.show();
+            }
+
+            templates := PopupWindow {
+                x: template-button.width - root.popup-width;
+                y: template-button.height + 6px;
+                width: root.popup-width;
+
+                PopupSurface {
+                    VerticalLayout {
+                        padding: 6px;
+                        spacing: 2px;
+                        for r in ceil(StandardState.classes.length / root.menu-columns): HorizontalLayout {
+                            spacing: 2px;
+                            for c in root.menu-columns: MenuItem {
+                                text: StandardState.classes[r * root.menu-columns + c];
+                                clicked => {
+                                    StandardState.apply-template(r * root.menu-columns + c);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for r in StandardState.cards.length / root.columns: HorizontalLayout {
+        spacing: 14px;
+        for c in root.columns: StandardCardView {
+            data: StandardState.cards[r * root.columns + c];
+            picked(option) => {
+                StandardState.assign(r * root.columns + c, option);
+            }
+        }
+    }
+}

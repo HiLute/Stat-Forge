@@ -1,0 +1,209 @@
+import { SpinBox } from "std-widgets.slint";
+import { Palette } from "theme.slint";
+import { Card, IconButton, PopupSurface, SecondaryButton } from "widgets.slint";
+
+export struct PointBuyCard {
+    name: string,
+    score: int,
+    cost: int,
+    modifier: string,
+    can-increase: bool,
+    can-decrease: bool,
+}
+
+export global PointBuyState {
+    in property <[PointBuyCard]> cards;
+    in property <int> budget;
+    in property <int> remaining;
+    in property <int> min-score;
+    in property <int> max-score;
+    in property <int> max-budget;
+    callback change(ability: int, delta: int);
+    callback set-budget(budget: int);
+    callback reset();
+}
+
+// Кнопка «−» / «+» степпера; знак нарисован прямоугольниками для чёткости.
+component StepButton inherits Rectangle {
+    in property <bool> plus;
+    in property <bool> enabled: true;
+    callback clicked;
+    property <color> sign: !self.enabled ? Palette.disabled : touch.has-hover ? Palette.accent-hover : Palette.accent;
+
+    width: 36px;
+    border-radius: 5px;
+    background: self.enabled && touch.pressed ? Palette.control-pressed : self.enabled && touch.has-hover ? Palette.control-hover : transparent;
+
+    Rectangle {
+        width: 14px;
+        height: 1.5px;
+        background: root.sign;
+    }
+    Rectangle {
+        width: 1.5px;
+        height: 14px;
+        background: root.sign;
+        visible: root.plus;
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+component PointBuyCardView inherits Card {
+    in property <PointBuyCard> data;
+    callback change(delta: int);
+
+    VerticalLayout {
+        padding: 14px;
+        spacing: 10px;
+
+        HorizontalLayout {
+            Text {
+                text: root.data.name;
+                color: Palette.text;
+                font-size: 15px;
+                font-weight: 600;
+                vertical-alignment: center;
+            }
+            Rectangle { horizontal-stretch: 1; }
+            Text {
+                text: "Стоимость: \{root.data.cost}";
+                color: Palette.muted;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+        }
+
+        Rectangle {
+            height: 34px;
+            background: Palette.control;
+            border-radius: 6px;
+            border-width: 1px;
+            border-color: Palette.border;
+
+            HorizontalLayout {
+                padding: 2px;
+                StepButton {
+                    plus: false;
+                    enabled: root.data.can-decrease;
+                    clicked => {
+                        root.change(-1);
+                    }
+                }
+                HorizontalLayout {
+                    horizontal-stretch: 1;
+                    alignment: center;
+                    spacing: 8px;
+                    Text {
+                        text: root.data.score;
+                        color: Palette.text;
+                        font-size: 15px;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: root.data.modifier;
+                        color: Palette.muted;
+                        font-size: 12px;
+                        vertical-alignment: center;
+                    }
+                }
+                StepButton {
+                    plus: true;
+                    enabled: root.data.can-increase;
+                    clicked => {
+                        root.change(1);
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component PointBuyTab inherits VerticalLayout {
+    in property <int> columns;
+    property <length> popup-width: 260px;
+
+    spacing: 14px;
+
+    HorizontalLayout {
+        spacing: 16px;
+        Text {
+            text: "Бюджет: \{PointBuyState.budget}";
+            color: Palette.text;
+            font-size: 14px;
+            font-weight: 700;
+            vertical-alignment: center;
+        }
+        Text {
+            text: "Осталось: \{PointBuyState.remaining}";
+            color: PointBuyState.remaining < 0 ? Palette.danger : Palette.accent;
+            font-size: 14px;
+            font-weight: 700;
+            vertical-alignment: center;
+        }
+        Text {
+            text: "Диапазон: \{PointBuyState.min-score}–\{PointBuyState.max-score}";
+            color: Palette.muted;
+            font-size: 12px;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        Rectangle { horizontal-stretch: 1; }
+        settings-button := IconButton {
+            icon: @image-url("icons/settings.svg");
+            clicked => {
+                settings.show();
+            }
+
+            settings := PopupWindow {
+                x: settings-button.width - root.popup-width;
+                y: settings-button.height + 6px;
+                width: root.popup-width;
+                close-policy: close-on-click-outside;
+
+                PopupSurface {
+                    VerticalLayout {
+                        padding: 12px;
+                        spacing: 10px;
+
+                        Text {
+                            text: "Бюджет очков";
+                            color: Palette.muted;
+                            font-size: 12px;
+                        }
+                        SpinBox {
+                            minimum: 0;
+                            maximum: PointBuyState.max-budget;
+                            value: PointBuyState.budget;
+                            edited(value) => {
+                                PointBuyState.set-budget(value);
+                            }
+                        }
+                        SecondaryButton {
+                            text: "Сбросить значения";
+                            clicked => {
+                                PointBuyState.reset();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for r in PointBuyState.cards.length / root.columns: HorizontalLayout {
+        spacing: 14px;
+        for c in root.columns: PointBuyCardView {
+            data: PointBuyState.cards[r * root.columns + c];
+            change(delta) => {
+                PointBuyState.change(r * root.columns + c, delta);
+            }
+        }
+    }
+}

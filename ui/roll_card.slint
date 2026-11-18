@@ -1,0 +1,145 @@
+import { ComboBox } from "std-widgets.slint";
+import { Palette } from "theme.slint";
+import { Card } from "widgets.slint";
+
+// Карточка одного броска 4d6 с кубиками и выбором характеристики.
+// Используется вкладками «Случайный набор» и «Эксперименты».
+
+export struct DieData {
+    value: int,
+    angle: angle,
+}
+
+export struct RollData {
+    total: int,
+    modifier: string,
+    dice: [DieData],
+    dropped: int,
+    rolling: bool,
+    options: [string],
+    selected: int,
+}
+
+component Pip inherits Rectangle {
+    in property <float> cx;
+    in property <float> cy;
+    in property <length> area;
+    width: self.area / 6;
+    height: self.width;
+    border-radius: self.width / 2;
+    x: (self.area * self.cx) - self.width / 2;
+    y: (self.area * self.cy) - self.height / 2;
+}
+
+// Кубик в ячейке 48×48. Во время броска грань уменьшена и подпрыгивает
+// (смещение выводится из случайного угла), при остановке «приземляется»
+// с пружинящим отскоком. Смещение и размер работают в любом рендере;
+// наклон — только там, где рендер поддерживает поворот (не в программном).
+component Die inherits Rectangle {
+    in property <int> value;
+    in property <angle> angle;
+    in property <bool> dropped;
+    in property <bool> rolling;
+    property <color> pip-color: self.dropped ? Palette.pip-dropped : Palette.pip;
+    property <float> lo: 0.28;
+    property <float> hi: 0.72;
+    property <length> size: self.rolling ? 40px : 48px;
+    property <length> jump-x: self.rolling ? 4px * sin(self.angle * 3) : 0px;
+    property <length> jump-y: self.rolling ? 4px * sin(self.angle * 5 + 40deg) : 0px;
+    animate size { duration: 320ms; easing: ease-out-back; }
+    animate pip-color { duration: 350ms; }
+
+    width: 48px;
+    height: 48px;
+
+    face := Rectangle {
+        width: root.size;
+        height: root.size;
+        x: (root.width - self.width) / 2 + root.jump-x;
+        y: (root.height - self.height) / 2 + root.jump-y;
+        animate x, y { duration: 90ms; easing: ease-out; }
+        border-radius: 4px;
+        background: root.dropped ? Palette.die-dropped : Palette.die;
+        border-width: 1px;
+        border-color: root.dropped ? transparent : Palette.border;
+        animate background, border-color { duration: 350ms; }
+        transform-rotation: root.angle;
+        animate transform-rotation { duration: 90ms; easing: ease-out; }
+
+        // Раскладка точек как на настоящем кубике.
+        Pip { cx: root.lo; cy: root.lo; area: face.width; background: root.pip-color; visible: root.value >= 2; }
+        Pip { cx: root.hi; cy: root.hi; area: face.width; background: root.pip-color; visible: root.value >= 2; }
+        Pip { cx: root.hi; cy: root.lo; area: face.width; background: root.pip-color; visible: root.value >= 4; }
+        Pip { cx: root.lo; cy: root.hi; area: face.width; background: root.pip-color; visible: root.value >= 4; }
+        Pip { cx: root.lo; cy: 0.5; area: face.width; background: root.pip-color; visible: root.value == 6; }
+        Pip { cx: root.hi; cy: 0.5; area: face.width; background: root.pip-color; visible: root.value == 6; }
+        Pip { cx: 0.5; cy: 0.5; area: face.width; background: root.pip-color; visible: mod(root.value, 2) == 1; }
+    }
+}
+
+export component RollCard inherits Card {
+    in property <RollData> data;
+    callback picked(option: int);
+
+    // Карточки не пересоздаются при новом броске, а ComboBox при выборе
+    // перезаписывает свой current-index, разрывая привязку, — поэтому
+    // синхронизируем выбор вручную при каждом обновлении данных.
+    changed data => {
+        combo.current-index = self.data.selected;
+    }
+
+    VerticalLayout {
+        padding: 16px;
+        padding-bottom: 20px;
+        spacing: 18px;
+
+        HorizontalLayout {
+            spacing: 12px;
+
+            VerticalLayout {
+                alignment: center;
+                min-width: 40px;
+                Text {
+                    text: root.data.total;
+                    color: root.data.rolling ? Palette.muted : Palette.text;
+                    font-size: 26px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                    animate color { duration: 250ms; }
+                }
+                Text {
+                    text: root.data.modifier;
+                    color: Palette.muted;
+                    font-size: 11px;
+                    horizontal-alignment: center;
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                horizontal-stretch: 1;
+                combo := ComboBox {
+                    model: root.data.options;
+                    current-index: root.data.selected;
+                    selected => {
+                        root.picked(self.current-index);
+                    }
+                }
+            }
+        }
+
+        HorizontalLayout {
+            alignment: center;
+            spacing: 18px;
+            // Фиксированное число повторений, а не модель кубиков: модель
+            // меняется каждый кадр броска, и элементы пересоздавались бы
+            // без анимаций.
+            for i in 4: Die {
+                value: root.data.dice[i].value;
+                angle: root.data.dice[i].angle;
+                dropped: i == root.data.dropped;
+                rolling: root.data.rolling;
+            }
+        }
+    }
+}

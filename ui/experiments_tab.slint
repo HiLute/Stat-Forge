@@ -1,0 +1,86 @@
+import { SpinBox } from "std-widgets.slint";
+import { Palette } from "theme.slint";
+import { AccentButton } from "widgets.slint";
+import { RollCard, RollData } from "roll_card.slint";
+
+export global ExperimentState {
+    in property <[RollData]> rolls;
+    in property <int> grand-total;
+    in-out property <int> min-total: 75;
+    in property <int> min-limit;
+    in property <int> max-limit;
+    in property <bool> searching;
+    in property <string> status;
+    callback search(min-total: int);
+    callback stop();
+    callback assign(card: int, option: int);
+    // Вызывается из Rust, когда фоновый поиск набора завершился.
+    callback search-finished();
+}
+
+export component ExperimentsTab inherits VerticalLayout {
+    in property <int> columns;
+
+    spacing: 14px;
+
+    HorizontalLayout {
+        spacing: 10px;
+        Text {
+            text: "Минимальная сумма характеристик:";
+            color: Palette.muted;
+            font-size: 14px;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        SpinBox {
+            width: 120px;
+            enabled: !ExperimentState.searching;
+            minimum: ExperimentState.min-limit;
+            maximum: ExperimentState.max-limit;
+            value: ExperimentState.min-total;
+            edited(value) => {
+                ExperimentState.min-total = value;
+            }
+        }
+        Rectangle { horizontal-stretch: 1; }
+        AccentButton {
+            text: ExperimentState.searching ? "Стоп" : "Бросок";
+            clicked => {
+                if ExperimentState.searching {
+                    ExperimentState.stop();
+                } else {
+                    ExperimentState.search(ExperimentState.min-total);
+                }
+            }
+        }
+    }
+
+    HorizontalLayout {
+        spacing: 16px;
+        if ExperimentState.rolls.length > 0: Text {
+            text: "Общая сумма: \{ExperimentState.grand-total}";
+            color: Palette.accent;
+            font-size: 14px;
+            font-weight: 700;
+            vertical-alignment: center;
+        }
+        Text {
+            text: ExperimentState.status;
+            color: Palette.muted;
+            font-size: 14px;
+            vertical-alignment: center;
+            wrap: word-wrap;
+            horizontal-stretch: 1;
+        }
+    }
+
+    for r in ExperimentState.rolls.length / root.columns: HorizontalLayout {
+        spacing: 14px;
+        for c in root.columns: RollCard {
+            data: ExperimentState.rolls[r * root.columns + c];
+            picked(option) => {
+                ExperimentState.assign(r * root.columns + c, option);
+            }
+        }
+    }
+}

@@ -1,0 +1,11 @@
+[package]
+name = "stat-forge"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+fastrand = "2.5.0"
+slint = "1.19.0"
+
+[build-dependencies]
+slint-build = "1.19.0"

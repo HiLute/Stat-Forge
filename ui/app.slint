@@ -1,0 +1,69 @@
+import { ScrollView } from "std-widgets.slint";
+
+// JetBrains Mono встроен в бинарник, чтобы не зависеть от установленных
+// в системе шрифтов (лицензия: ui/fonts/OFL.txt).
+import "fonts/JetBrainsMono-Regular.ttf";
+import "fonts/JetBrainsMono-SemiBold.ttf";
+import "fonts/JetBrainsMono-Bold.ttf";
+
+import { Palette } from "theme.slint";
+import { Panel, TabBar } from "widgets.slint";
+import { RandomTab } from "random_tab.slint";
+import { StandardTab } from "standard_tab.slint";
+import { PointBuyTab } from "point_buy_tab.slint";
+import { ExperimentsTab } from "experiments_tab.slint";
+
+// Глобальные состояния вкладок и их структуры нужны Rust-коду.
+export { RollData, DieData } from "roll_card.slint";
+export { RandomState } from "random_tab.slint";
+export { ExperimentState } from "experiments_tab.slint";
+export { StandardState, StandardCard } from "standard_tab.slint";
+export { PointBuyState, PointBuyCard } from "point_buy_tab.slint";
+
+export component AppWindow inherits Window {
+    in-out property <int> current-tab: 0;
+
+    // Число колонок подстраивается под ширину окна (6 делится на 3, 2 и 1).
+    property <int> columns: root.width >= 940px ? 3 : root.width >= 640px ? 2 : 1;
+
+    title: "Stat Forge";
+    icon: @image-url("icon.svg");
+    background: Palette.window;
+    default-font-family: "JetBrains Mono";
+    preferred-width: 1180px;
+    preferred-height: 500px;
+    min-width: 340px;
+    min-height: 260px;
+
+    ScrollView {
+        VerticalLayout {
+            padding: 12px;
+            spacing: 12px;
+            alignment: start;
+
+            TabBar {
+                tabs: ["Случайный набор", "Стандартный набор", "Покупка значений", "Эксперименты"];
+                current <=> root.current-tab;
+            }
+
+            Panel {
+                VerticalLayout {
+                    padding: 18px;
+
+                    if root.current-tab == 0: RandomTab {
+                        columns: root.columns;
+                    }
+                    if root.current-tab == 1: StandardTab {
+                        columns: root.columns;
+                    }
+                    if root.current-tab == 2: PointBuyTab {
+                        columns: root.columns;
+                    }
+                    if root.current-tab == 3: ExperimentsTab {
+                        columns: root.columns;
+                    }
+                }
+            }
+        }
+    }
+}
