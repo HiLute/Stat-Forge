@@ -134,7 +134,9 @@ pub fn search_with(min_total: u32, threads: usize, seed: u64, control: &Control)
             sheet: Sheet::from_rolls(outcomes.map(|o| Roll::from_dice(decode(o.into()))).into()),
             attempts: index + 1,
         },
-        None => Search::Stopped { attempts: control.attempts() },
+        None => Search::Stopped {
+            attempts: control.attempts(),
+        },
     }
 }
 
@@ -255,7 +257,10 @@ mod tests {
     fn stopped_before_start() {
         let control = Control::new();
         control.stop();
-        assert!(matches!(search_with(80, 4, 1, &control), Search::Stopped { attempts: 0 }));
+        assert!(matches!(
+            search_with(80, 4, 1, &control),
+            Search::Stopped { attempts: 0 }
+        ));
     }
 
     #[test]

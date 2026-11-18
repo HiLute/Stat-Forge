@@ -1,0 +1,83 @@
+name: Release
+
+# Тег вида v1.2.3 собирает приложение для Windows и macOS и публикует релиз.
+# Ручной запуск собирает те же архивы без публикации (они остаются
+# артефактами запуска).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows:
+    name: Windows x86_64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --locked
+      - name: Архив
+        shell: pwsh
+        run: |
+          $name = "stat-forge-${{ github.ref_name }}-windows-x86_64"
+          New-Item -ItemType Directory -Path $name | Out-Null
+          Copy-Item target/release/stat-forge.exe "$name/Stat Forge.exe"
+          Copy-Item README.md "$name/"
+          Copy-Item ui/fonts/OFL.txt "$name/JetBrainsMono-OFL.txt"
+          Compress-Archive -Path $name -DestinationPath "$name.zip"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: stat-forge-*-windows-x86_64.zip
+
+  macos:
+    name: macOS universal (Apple Silicon + Intel)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --locked --target aarch64-apple-darwin
+      - run: cargo build --release --locked --target x86_64-apple-darwin
+      - name: Универсальный бинарник и .app
+        run: |
+          mkdir -p dist
+          lipo -create -output dist/stat-forge \
+            target/aarch64-apple-darwin/release/stat-forge \
+            target/x86_64-apple-darwin/release/stat-forge
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          if [[ "$GITHUB_REF" == refs/tags/v* && "${GITHUB_REF_NAME#v}" != "$version" ]]; then
+            echo "::error::Тег $GITHUB_REF_NAME не совпадает с версией $version в Cargo.toml"
+            exit 1
+          fi
+          packaging/macos/make-app.sh dist/stat-forge "$version" dist
+          name="stat-forge-${{ github.ref_name }}-macos-universal"
+          ditto -c -k --keepParent "dist/Stat Forge.app" "$name.zip"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macos
+          path: stat-forge-*-macos-universal.zip
+
+  publish:
+    name: Публикация релиза
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: dist/*.zip
+          generate_release_notes: true

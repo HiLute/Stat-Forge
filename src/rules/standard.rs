@@ -13,18 +13,54 @@ pub struct ClassTemplate {
 
 /// Шаблоны из «Книги игрока» D&D 2024.
 pub const CLASS_TEMPLATES: [ClassTemplate; 12] = [
-    ClassTemplate { name: "Бард", scores: [8, 14, 12, 13, 10, 15] },
-    ClassTemplate { name: "Варвар", scores: [15, 13, 14, 10, 12, 8] },
-    ClassTemplate { name: "Воин", scores: [15, 14, 13, 8, 10, 12] },
-    ClassTemplate { name: "Волшебник", scores: [8, 12, 13, 15, 14, 10] },
-    ClassTemplate { name: "Друид", scores: [8, 12, 14, 13, 15, 10] },
-    ClassTemplate { name: "Жрец", scores: [14, 8, 13, 10, 15, 12] },
-    ClassTemplate { name: "Колдун", scores: [8, 14, 13, 12, 10, 15] },
-    ClassTemplate { name: "Монах", scores: [12, 15, 13, 10, 14, 8] },
-    ClassTemplate { name: "Паладин", scores: [15, 10, 13, 8, 12, 14] },
-    ClassTemplate { name: "Плут", scores: [12, 15, 13, 14, 10, 8] },
-    ClassTemplate { name: "Следопыт", scores: [12, 15, 13, 8, 14, 10] },
-    ClassTemplate { name: "Чародей", scores: [10, 13, 14, 8, 12, 15] },
+    ClassTemplate {
+        name: "Бард",
+        scores: [8, 14, 12, 13, 10, 15],
+    },
+    ClassTemplate {
+        name: "Варвар",
+        scores: [15, 13, 14, 10, 12, 8],
+    },
+    ClassTemplate {
+        name: "Воин",
+        scores: [15, 14, 13, 8, 10, 12],
+    },
+    ClassTemplate {
+        name: "Волшебник",
+        scores: [8, 12, 13, 15, 14, 10],
+    },
+    ClassTemplate {
+        name: "Друид",
+        scores: [8, 12, 14, 13, 15, 10],
+    },
+    ClassTemplate {
+        name: "Жрец",
+        scores: [14, 8, 13, 10, 15, 12],
+    },
+    ClassTemplate {
+        name: "Колдун",
+        scores: [8, 14, 13, 12, 10, 15],
+    },
+    ClassTemplate {
+        name: "Монах",
+        scores: [12, 15, 13, 10, 14, 8],
+    },
+    ClassTemplate {
+        name: "Паладин",
+        scores: [15, 10, 13, 8, 12, 14],
+    },
+    ClassTemplate {
+        name: "Плут",
+        scores: [12, 15, 13, 14, 10, 8],
+    },
+    ClassTemplate {
+        name: "Следопыт",
+        scores: [12, 15, 13, 8, 14, 10],
+    },
+    ClassTemplate {
+        name: "Чародей",
+        scores: [10, 13, 14, 8, 12, 15],
+    },
 ];
 
 /// Распределение значений стандартного набора по характеристикам

@@ -2,10 +2,23 @@
 name = "stat-forge"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.95"
+description = "Генератор характеристик персонажей D&D 5e"
+repository = "https://github.com/HiLute/Stat-Forge"
 
 [dependencies]
 fastrand = "2.5.0"
-slint = "1.19.0"
+# Без linuxkms (запуск без оконной системы) и системного трея: настольному
+# приложению они не нужны, а на Linux требуют libudev, libinput, libgbm, libseat.
+slint = { version = "1.19.0", default-features = false, features = [
+    "std",
+    "compat-1-18",
+    "backend-winit",
+    "renderer-femtovg",
+    "renderer-software",
+    "accessibility",
+] }
 
 [build-dependencies]
 slint-build = "1.19.0"
+winresource = "0.1.34"

@@ -106,16 +106,19 @@ pub fn install(ui: &AppWindow) {
         let board = board.clone();
         move || {
             let Some(ui) = ui.upgrade() else { return };
-            let Some(result) = running.borrow_mut().take().and_then(|r| r.result.recv().ok()) else {
+            let Some(result) = running
+                .borrow_mut()
+                .take()
+                .and_then(|r| r.result.recv().ok())
+            else {
                 return;
             };
             let globals = ui.global::<ExperimentState>();
             globals.set_searching(false);
             match result {
                 Search::Found { sheet, attempts } => {
-                    globals.set_status(
-                        format!("Брошено наборов: {}", group_digits(attempts)).into(),
-                    );
+                    globals
+                        .set_status(format!("Брошено наборов: {}", group_digits(attempts)).into());
                     board::show(&board, &ui, sheet);
                 }
                 Search::Stopped { attempts } => {

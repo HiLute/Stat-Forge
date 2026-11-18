@@ -121,7 +121,9 @@ pub fn show(board: &SharedBoard, ui: &AppWindow, sheet: Sheet) {
     let board = Rc::downgrade(board);
     let ui = ui.as_weak();
     this.timer.start(TimerMode::Repeated, TICK, move || {
-        let (Some(board), Some(ui)) = (board.upgrade(), ui.upgrade()) else { return };
+        let (Some(board), Some(ui)) = (board.upgrade(), ui.upgrade()) else {
+            return;
+        };
         let mut this = board.borrow_mut();
         this.tick += 1;
         this.render(&ui);
@@ -143,7 +145,9 @@ pub fn clear(board: &SharedBoard, ui: &AppWindow) {
 pub fn assign(board: &SharedBoard, ui: &AppWindow, card: i32, option: i32) {
     let mut this = board.borrow_mut();
     let card = card as usize;
-    let Some(sheet) = this.sheet.as_mut() else { return };
+    let Some(sheet) = this.sheet.as_mut() else {
+        return;
+    };
     if let Some(&choice) = sheet.options(card).get(option as usize) {
         sheet.assign(card, choice);
     }
